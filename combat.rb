@@ -1,28 +1,38 @@
 require 'debug'
 
 
+fighter_1_plate_shield_two_handed = {
+  name: "Fighter (plate shield 2hs)",
+  ac: 7,
+  max_armour: 3,
+  armour: 3,
+  health: 2,
+  wounds: 0,
+  atk: ['1d10+3']
+}
+
 fighter_1_plate_shield_longsword = {
   name: "Fighter (plate shield long)",
   ac: 7,
-  max_armour: 1,
-  armour: 1,
+  max_armour: 3,
+  armour: 3,
   health: 2,
   wounds: 0,
   atk: ['1d8+3']
 }
 
-fighter_1_plate_and_shield_shortsword = {
+fighter_1_plate_shield_shortsword = {
   name: "Fighter (plate shield short)",
   ac: 7,
-  max_armour: 1,
-  armour: 1,
+  max_armour: 3,
+  armour: 3,
   health: 2,
   wounds: 0,
   atk: ['1d6+3']
 }
 
-fighter_1_leather = {
-  name: "Fighter (leather)",
+fighter_1_leather_shortsword = {
+  name: "Fighter (leather short)",
   ac: 3,
   max_armour: 1,
   armour: 1,
@@ -69,7 +79,7 @@ goblin = {
   armour: 0,
   health: 1,
   wounds: 0,
-  atk: ["1d6"],
+  atk: ["1d4"],
 }
 
 
@@ -83,18 +93,19 @@ def roll_dice(dice_string)
 
   result = 0
   crit = false
+  miss = false
 
-  # dice_amount.to_i.times do
-    result = Random.rand(dice_kind.to_i) + 1 
+  result = Random.rand(dice_kind.to_i) + 1 
 
-    if result == dice_kind.to_i
-      crit = true
-      result += Random.rand(dice_kind.to_i) + 1 
-    end
+  miss = true if result == 1
 
-  # end
+  if result == dice_kind.to_i
+    crit = true
+    result += Random.rand(dice_kind.to_i) + 1 
+  end
 
-  [ result + bonus.to_i, crit ]
+
+  [ result + bonus.to_i, crit, miss ]
 end
 
 def is_alive(combatant)
@@ -154,18 +165,18 @@ end
 
 def attack(attacker, defendant, verbose = false)
   attacker[:atk].each do |atk|
-    dice_roll, was_critical = roll_dice(atk)
+    dice_roll, was_critical, was_miss = roll_dice(atk)
 
     puts "#{attacker[:name]} rolls #{dice_roll} against #{defendant[:ac]} #{was_critical ? 'Critical hit!' : ''}" if verbose
 
-    if dice_roll >= defendant[:ac] || was_critical
+    if !was_miss && (dice_roll >= defendant[:ac] || was_critical)
       damage(defendant, verbose)
       # damage(defendant) if was_critical
     end
   end
 end
 
-def run_100(side_a, side_b)
+def run_many(side_a, side_b)
   puts "#{side_a[:name]} vs #{side_b[:name]}" 
 
   res = (1..10000).each_with_object({}) do |i, res|
@@ -176,12 +187,10 @@ def run_100(side_a, side_b)
   end
 end
 
-# puts ""
-# puts run_100(bugbear_longsword, bugbear_dagger)
-# puts run_100(bugbear_longsword, fighter_1_leather)
-# puts ""
-# puts run_100(bugbear_sword, bugbear_sword)
-puts run_100(fighter_1_plate_and_shield_shortsword.clone, fighter_1_plate_shield_longsword.clone)
+puts run_many(fighter_1_leather_shortsword, goblin)
+# puts run_many(bugbear_longsword, fighter_1_leather)
+# puts run_many(fighter_1_plate_and_shield_shortsword.clone, fighter_1_plate_shield_longsword.clone)
+# puts run_many(fighter_1_plate_shield_two_handed.clone, fighter_1_plate_shield_shortsword.clone)
 
 # wound_system_combat(bugbear_dagger.clone, bugbear_longsword.clone, true)
-# wound_system_combat(fighter_1_plate_and_shield_shortsword.clone, fighter_1_plate_shield_longsword.clone, true)
+# wound_system_combat(fighter_1_plate_shield_two_handed.clone, fighter_1_plate_shield_shortsword.clone, true)
