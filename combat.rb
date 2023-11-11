@@ -23,6 +23,18 @@ Combatant = Struct.new("Combatant",
   end
 end
 
+Group = Struct.new("Group",
+  :members
+) do
+  def name
+    members.map { |m| m.name }.join(", ")
+  end
+
+  def is_alive?
+    members.any? { |m| m.is_alive? }
+  end
+end
+
 fighter_1_plate_shield_two_handed = Combatant.new(
   name: "Fighter (plate shield 2hs)",
   ac: 7,
@@ -204,10 +216,16 @@ def run_many(side_a, side_b)
   end
 end
 
-puts run_many(fighter_1_leather_shortsword, goblin)
+
+# puts run_many(fighter_1_leather_shortsword, goblin)
 # puts run_many(bugbear_longsword, fighter_1_leather)
 # puts run_many(fighter_1_plate_and_shield_shortsword.clone, fighter_1_plate_shield_longsword.clone)
 # puts run_many(fighter_1_plate_shield_two_handed.clone, fighter_1_plate_shield_shortsword.clone)
 
 # wound_system_combat(bugbear_dagger.clone, bugbear_longsword.clone, true)
 # wound_system_combat(fighter_1_plate_shield_two_handed.clone, fighter_1_plate_shield_shortsword.clone, true)
+
+g = Group.new([goblin, goblin])
+
+puts g.name
+puts g.is_alive?
