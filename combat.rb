@@ -1,7 +1,29 @@
 require 'debug'
 
+Combatant = Struct.new("Combatant",
+  :name,
+  :ac,
+  :max_armour,
+  :armour,
+  :health,
+  :wounds,
+  :atk,
+  keyword_init: true
+) do
+  def take_damage
+    if armor > 0
+      armor -= 1
+    else
+      wounds += 1
+    end
+  end
 
-fighter_1_plate_shield_two_handed = {
+  def is_alive?
+    wounds < health
+  end
+end
+
+fighter_1_plate_shield_two_handed = Combatant.new(
   name: "Fighter (plate shield 2hs)",
   ac: 7,
   max_armour: 3,
@@ -9,9 +31,9 @@ fighter_1_plate_shield_two_handed = {
   health: 2,
   wounds: 0,
   atk: ['1d10+3']
-}
+)
 
-fighter_1_plate_shield_longsword = {
+fighter_1_plate_shield_longsword = Combatant.new(
   name: "Fighter (plate shield long)",
   ac: 7,
   max_armour: 3,
@@ -19,9 +41,9 @@ fighter_1_plate_shield_longsword = {
   health: 2,
   wounds: 0,
   atk: ['1d8+3']
-}
+)
 
-fighter_1_plate_shield_shortsword = {
+fighter_1_plate_shield_shortsword = Combatant.new(
   name: "Fighter (plate shield short)",
   ac: 7,
   max_armour: 3,
@@ -29,9 +51,9 @@ fighter_1_plate_shield_shortsword = {
   health: 2,
   wounds: 0,
   atk: ['1d6+3']
-}
+)
 
-fighter_1_leather_shortsword = {
+fighter_1_leather_shortsword = Combatant.new(
   name: "Fighter (leather short)",
   ac: 3,
   max_armour: 1,
@@ -39,9 +61,9 @@ fighter_1_leather_shortsword = {
   health: 2,
   wounds: 0,
   atk: ['1d6+3']
-}
+)
 
-bugbear_shortsword = {
+bugbear_shortsword = Combatant.new(
   name: "Bugbear (shortsword)",
   ac: 4,
   max_armour: 0,
@@ -49,9 +71,9 @@ bugbear_shortsword = {
   health: 3,
   wounds: 0,
   atk: ["1d6"],
-}
+)
 
-bugbear_longsword = {
+bugbear_longsword = Combatant.new(
   name: "Bugbear (longsword)",
   ac: 4,
   max_armour: 0,
@@ -59,10 +81,10 @@ bugbear_longsword = {
   health: 3,
   wounds: 0,
   atk: ["1d8"],
-}
+)
 
 
-bugbear_dagger = {
+bugbear_dagger = Combatant.new( 
   name: "Bugbear (dagger)",
   ac: 4,
   max_armour: 0,
@@ -70,9 +92,9 @@ bugbear_dagger = {
   health: 3,
   wounds: 0,
   atk: ["1d4"],
-}
+ )
 
-goblin = {
+goblin = Combatant.new( 
   name: "Goblin",
   ac: 3,
   max_armour: 0,
@@ -80,7 +102,7 @@ goblin = {
   health: 1,
   wounds: 0,
   atk: ["1d4"],
-}
+ )
 
 
 combat = {
@@ -104,16 +126,11 @@ def roll_dice(dice_string)
     result += Random.rand(dice_kind.to_i) + 1 
   end
 
-
   [ result + bonus.to_i, crit, miss ]
 end
 
-def is_alive(combatant)
-  combatant[:wounds] < combatant[:health]
-end
-
 def everyone_is_alive(side_a, side_b)
-  is_alive(side_a) && is_alive(side_b)
+  side_a.is_alive? && side_b.is_alive?
 end
 
 def wound_system_combat(side_a, side_b, verbose = false)
@@ -140,44 +157,44 @@ def wound_system_combat(side_a, side_b, verbose = false)
   end
 
   puts "Round: #{rounds} - #{report(side_a, side_b, rounds, verbose)}" if verbose
-  is_alive(side_a) ? report_winner(side_a) : report_winner(side_b) if verbose
+  side_a.is_alive? ? report_winner(side_a) : report_winner(side_b) if verbose
 
   report(side_a, side_b, rounds, verbose)
 end
 
 def report(side_a, side_b, rounds, verbose)
-  { round: rounds, winner: is_alive(side_a) ? side_a[:name] : side_b[:name] }
+  { round: rounds, winner: side_a.is_alive? ? side_a.name : side_b.name }
 end
 
 def report_winner(side)
-  puts "#{side[:name]} wins losing #{side[:max_armour] - side[:armour]} armour and #{side[:wounds]} wounds"
+  puts "#{side.name} wins losing #{side.max_armour - side.armour} armour and #{side.wounds} wounds"
 end
 
 def damage(side, verbose)
-  if side[:armour] > 0
-    puts "#{side[:name]}: loses 1 armour" if verbose
-    side[:armour] -= 1
+  if side.armour > 0
+    puts "#{side.name}: loses 1 armour" if verbose
+    side.armour -= 1
   else
-    puts "#{side[:name]}: takes a wound" if verbose
-    side[:wounds] += 1
+    puts "#{side.name}: takes a wound" if verbose
+    side.wounds += 1
   end
 end
 
 def attack(attacker, defendant, verbose = false)
-  attacker[:atk].each do |atk|
+  attacker.atk.each do |atk|
     dice_roll, was_critical, was_miss = roll_dice(atk)
 
-    puts "#{attacker[:name]} rolls #{dice_roll} against #{defendant[:ac]} #{was_critical ? 'Critical hit!' : ''}" if verbose
+    puts "#{attacker.name} rolls #{dice_roll} against #{defendant.ac} #{was_critical ? 'Critical hit!' : ''}" if verbose
 
-    if !was_miss && (dice_roll >= defendant[:ac] || was_critical)
+    if !was_miss && (dice_roll >= defendant.ac || was_critical)
       damage(defendant, verbose)
-      # damage(defendant) if was_critical
+      # damage(defendant) if was_critical # not using double wound for every critical
     end
   end
 end
 
 def run_many(side_a, side_b)
-  puts "#{side_a[:name]} vs #{side_b[:name]}" 
+  puts "#{side_a.name} vs #{side_b.name}" 
 
   res = (1..10000).each_with_object({}) do |i, res|
     combat_result = wound_system_combat(side_a.clone, side_b.clone)
